@@ -14,6 +14,8 @@ namespace Methane2._0{
     public partial class Form1 : Form{
         private string configPath = null;
         private string vsProjPath = null;
+        private string configDir = null;
+        private string vsProjDir = null;
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool AllocConsole();
         public Form1(){
@@ -29,6 +31,8 @@ namespace Methane2._0{
                 string filePath = fd.FileName;
                 loadInfo.Text += filePath;
                 configPath = filePath;
+
+                configDir = Path.GetDirectoryName(vsProjPath);
             }
         }
 
@@ -41,12 +45,14 @@ namespace Methane2._0{
                 string filePath = fd.FileName;
                 vsInfo.Text += filePath;
                 vsProjPath = filePath;
+
+                vsProjDir = Path.GetDirectoryName(vsProjPath);
             }
         }
 
         private void startBtn_Click(object sender, EventArgs e) {
             if (configPath != null && vsProjPath != null) {
-                InterPreter inter = new InterPreter(configPath ,vsProjPath);
+                InterPreter inter = new InterPreter(configPath ,vsProjPath,configDir,vsProjDir);
                 inter.Run();
             }
         }
