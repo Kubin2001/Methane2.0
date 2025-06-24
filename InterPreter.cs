@@ -21,6 +21,7 @@ namespace Methane2._0{
         private string fullLine = null;
         private string currentCommand = null;
         private List<string> args = new List<string>();
+        private List<Tuple<string,string>> Stack = new List<Tuple<string,string>>();
 
         public InterPreter(string confPath, string vsPath ,string configDir, string vsDir) {
             if(confPath != null && vsPath != null){
@@ -44,6 +45,8 @@ namespace Methane2._0{
             Commands["CloseDependencies"] = CloseDependencies;
             Commands["CopySingleFile"] = CopySingleFile;
             Commands["CopyMultipleFiles"] = CopyMultipleFiles;
+            Commands["SetCppStandard"] = SetCppStandard;
+            Commands["CopyFolder"] = CopyFolder;
 
         }
 
@@ -232,6 +235,7 @@ namespace Methane2._0{
                 return;
             }
 
+
             try {
                 string destPath = Path.Combine(vsDir, Path.GetFileName(args[0]));
                 File.Copy(args[0], destPath, overwrite: true);
@@ -270,6 +274,97 @@ namespace Methane2._0{
             }
             catch (Exception ex) {
                 Console.WriteLine($"Unexpected error CopyMultipleFiles: {ex.Message}");
+            }
+        }
+
+        void CopyFolder() {
+            if (args.Count < 1) {
+                Console.WriteLine("CopyFolder expected 1 arg, got: " + args.Count);
+                return;
+            }
+
+            string dirPath = args[0];
+
+            if (!Directory.Exists(dirPath)) {
+                Console.WriteLine("CopyFolder: source folder does not exist");
+                return;
+            }
+
+            string folderName = Path.GetFileName(Path.GetFullPath(dirPath));
+            string destinationRoot = Path.Combine(vsDir, folderName);
+
+            if (Directory.Exists(destinationRoot)) {
+                Console.WriteLine("CopyFolder: folder already exists in project path");
+                return;
+            }
+
+            try {
+                foreach (string dir in Directory.GetDirectories(dirPath, "*", SearchOption.AllDirectories)) {
+                    string relativePath = dir.Substring(dirPath.Length).TrimStart(Path.DirectorySeparatorChar);
+                    string destDir = Path.Combine(destinationRoot, relativePath);
+                    Directory.CreateDirectory(destDir);
+                }
+
+                foreach (string file in Directory.GetFiles(dirPath, "*", SearchOption.AllDirectories)) {
+                    string relativePath = file.Substring(dirPath.Length).TrimStart(Path.DirectorySeparatorChar);
+                    string destFile = Path.Combine(destinationRoot, relativePath);
+                    Directory.CreateDirectory(Path.GetDirectoryName(destFile));
+                    File.Copy(file, destFile, overwrite: true);
+                    Console.WriteLine("Copied: " + destFile);
+                }
+
+                Console.WriteLine("CopyFolder: completed successfully");
+            }
+            catch (IOException ioEx) {
+                Console.WriteLine($"IO error CopyFolder: {ioEx.Message}");
+            }
+            catch (UnauthorizedAccessException uaEx) {
+                Console.WriteLine($"Access denied CopyFolder: {uaEx.Message}");
+            }
+            catch (Exception ex) {
+                Console.WriteLine($"Unexpected error CopyFolder: {ex.Message}");
+            }
+        }
+
+        private void SetCppStandard() {
+            if (args.Count() != 1) {
+                Console.WriteLine("Error in SetCppStandard expected one argument");
+                return;
+            }
+            if (!int.TryParse(args[0], out int result)) {
+                Console.WriteLine("SetCppStandard Argument is not a valid integer: " + result);
+                return;
+            }
+
+            int[] allowed = { 3, 11, 14, 17, 20, 98 };
+            if (!allowed.Contains(result)) {
+                Console.WriteLine("SetCppStandard  unsupported C++ standard.");
+                return;
+            }
+
+            XmlDocument doc = new XmlDocument();
+            XmlNamespaceManager nsmgr = new XmlNamespaceManager(doc.NameTable);
+            nsmgr.AddNamespace("msb", "http://schemas.microsoft.com/developer/msbuild/2003");
+
+
+            try {
+                doc.Load(vsPath);
+                XmlNodeList clCompileNodes = doc.SelectNodes("//msb:Project/msb:ItemDefinitionGroup/msb:ClCompile", nsmgr);
+                foreach (XmlNode node in clCompileNodes) {
+                    XmlNode additionalIncludesNode = node.SelectSingleNode("msb:LanguageStandard", nsmgr);
+                    if (additionalIncludesNode != null) {
+                        additionalIncludesNode.InnerText = "stdcpp" + args[0];
+                    }
+                    else {
+                        XmlElement newElement = doc.CreateElement("LanguageStandard", nsmgr.LookupNamespace("msb"));
+                        newElement.InnerText = "stdcpp" + args[0];
+                        node.AppendChild(newElement);
+                    }
+                }
+                doc.Save(vsPath);
+            }
+            catch (Exception ex) {
+                MessageBox.Show("Failed to modify project:" + ex.Message);
             }
         }
 
