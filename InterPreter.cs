@@ -21,7 +21,7 @@ namespace Methane2._0{
         private string fullLine = null;
         private string currentCommand = null;
         private List<string> args = new List<string>();
-        private List<Tuple<string,string>> Stack = new List<Tuple<string,string>>();
+        private List<Tuple<string,string>> LanguageStack = new List<Tuple<string,string>>();
 
         public InterPreter(string confPath, string vsPath ,string configDir, string vsDir) {
             if(confPath != null && vsPath != null){
@@ -34,6 +34,13 @@ namespace Methane2._0{
             }
         }
 
+        private string SplitString(string str, int start , int end) {
+            string output = "";
+            for (int i = start; i < end; i++) {
+                output += str[i];
+            }
+            return output;
+        }
         private void CreateCommands() {
             Commands = new Dictionary<string, Action>();
             Commands["AddIncludeDir"] = AddIncludeDir;
@@ -371,6 +378,80 @@ namespace Methane2._0{
         public void Run(){
             if (ready) {
                 String[] config = File.ReadAllLines(this.configPath);
+
+                foreach (string line in config) { // Registering Variables
+                    if (line.Contains('$')) {
+                        int gettingType = 0;
+                        string varName = "";
+                        string varData = "";
+                        foreach (char elem in line) {
+                            if (elem == ' ') { continue; }
+
+                            switch (gettingType) {
+                                case 0:
+                                    if (elem == '{') {
+                                        gettingType = 1;
+                                        break;
+                                    }
+                                    break;
+                                case 1:
+                                    if (elem == '}') {
+                                        gettingType = 2;
+                                        break;
+                                    }
+                                    varName += elem;
+                                    break;
+                                case 2:
+                                    if (elem == '=') {
+                                        gettingType = 3;
+                                        break;
+                                    }
+                                    varName += elem;
+                                    break;
+                                case 3:
+                                    if (elem == ' ') {
+                                        break;
+                                    }
+                                    varData += elem;
+                                    break;
+                            }
+                        }
+                        Tuple<string, string> t = Tuple.Create(varName, varData);
+                        LanguageStack.Add(t);
+                        continue;
+                    }
+
+                }
+                foreach (Tuple<string, string> elem in LanguageStack) {
+                    Console.WriteLine("Name: " + elem.Item1 + " Data: " + elem.Item2);
+                }
+
+                foreach (string line in config) { // Inserting Variables
+                    if (line.Contains('{') && line.Contains('}') && !line.Contains('$')) {
+                        int start = line.IndexOf("{");
+                        int end = line.IndexOf("}");
+                        string dataName = SplitString(line,start +1,end);
+
+                        bool found = false;
+                        foreach(var data in LanguageStack) {
+                            if(data.Item1 == dataName) {
+                                dataName = data.Item2;
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        if (!found) {
+                            Console.WriteLine("Error data not found in the stack: " + dataName);
+                        }
+
+                        string lineStart = SplitString(line,0, start-1);
+                        string lineEnd = SplitString(line,end +1, line.Length);
+                        string output = lineStart+ dataName +lineEnd;
+                        Console.WriteLine("Reconstructed Variable: " + output);
+                    }
+                }
+
                 foreach (string line in config) {
                     string parsedLine = "";
                     string arg = "";
@@ -378,6 +459,7 @@ namespace Methane2._0{
                     if(line == "") {
                         continue;
                     }
+
                     if (line.Contains('(')) {
                         foreach (char elem in line) {
                             if (collectArg) {
