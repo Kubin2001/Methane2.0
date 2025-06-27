@@ -41,6 +41,30 @@ namespace Methane2._0{
             }
             return output;
         }
+
+        private string InsertVariable(string line) {
+            int start = line.IndexOf("{");
+            int end = line.IndexOf("}");
+            string dataName = SplitString(line, start + 1, end);
+
+            bool found = false;
+            foreach (var data in LanguageStack) {
+                if (data.Item1 == dataName) {
+                    dataName = data.Item2;
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                Console.WriteLine("Error data not found in the stack: " + dataName);
+            }
+
+            string lineStart = SplitString(line, 0, start);
+            string lineEnd = SplitString(line, end +1, line.Length);
+            string output = lineStart + dataName + lineEnd;
+            return output;
+        }
         private void CreateCommands() {
             Commands = new Dictionary<string, Action>();
             Commands["AddIncludeDir"] = AddIncludeDir;
@@ -54,6 +78,7 @@ namespace Methane2._0{
             Commands["CopyMultipleFiles"] = CopyMultipleFiles;
             Commands["SetCppStandard"] = SetCppStandard;
             Commands["CopyFolder"] = CopyFolder;
+            Commands["JoinVariables"] = JoinVariables;
 
         }
 
@@ -375,16 +400,36 @@ namespace Methane2._0{
             }
         }
 
+        private void JoinVariables() {
+            if (args.Count() != 3) {
+                Console.WriteLine("Error in JoinVariables expected exacly 3 arguments got: " + args.Count());
+                return;
+            }
+            string newVariableName = args[0];
+            string newVariableData = args[1] + args[2];
+            Tuple<string,string> t1 = Tuple.Create(newVariableName, newVariableData);
+            LanguageStack.Add(t1);
+        }
+
         public void Run(){
             if (ready) {
-                String[] config = File.ReadAllLines(this.configPath);
+                Tuple<string, string> t1 = Tuple.Create("vsDir", vsDir);
+                Tuple<string, string> t2 = Tuple.Create("cfgDir", configDir);
+                LanguageStack.Add(t1);
+                LanguageStack.Add(t2);
 
-                foreach (string line in config) { // Registering Variables
-                    if (line.Contains('$')) {
+                String[] loadConfig = File.ReadAllLines(this.configPath);
+                List<string> config = new List<string>();
+                config.AddRange(loadConfig);
+
+                for (int i = 0; i < config.Count(); i++) {
+                    // Registering Variables
+                    if (config[i].Contains('$')) {
+
                         int gettingType = 0;
                         string varName = "";
                         string varData = "";
-                        foreach (char elem in line) {
+                        foreach (char elem in config[i]) {
                             if (elem == ' ') { continue; }
 
                             switch (gettingType) {
@@ -421,47 +466,24 @@ namespace Methane2._0{
                         continue;
                     }
 
-                }
-                foreach (Tuple<string, string> elem in LanguageStack) {
-                    Console.WriteLine("Name: " + elem.Item1 + " Data: " + elem.Item2);
-                }
-
-                foreach (string line in config) { // Inserting Variables
-                    if (line.Contains('{') && line.Contains('}') && !line.Contains('$')) {
-                        int start = line.IndexOf("{");
-                        int end = line.IndexOf("}");
-                        string dataName = SplitString(line,start +1,end);
-
-                        bool found = false;
-                        foreach(var data in LanguageStack) {
-                            if(data.Item1 == dataName) {
-                                dataName = data.Item2;
-                                found = true;
-                                break;
-                            }
-                        }
-
-                        if (!found) {
-                            Console.WriteLine("Error data not found in the stack: " + dataName);
-                        }
-
-                        string lineStart = SplitString(line,0, start-1);
-                        string lineEnd = SplitString(line,end +1, line.Length);
-                        string output = lineStart+ dataName +lineEnd;
-                        Console.WriteLine("Reconstructed Variable: " + output);
+                    // Inserting Variables
+                    string newLine = config[i];
+                    while (newLine.Contains('{') && newLine.Contains('}') && !newLine.Contains('$')) {
+                        newLine = InsertVariable(newLine);
                     }
-                }
+                    config[i] = newLine;
 
-                foreach (string line in config) {
+
+                    // Interpreting Line
                     string parsedLine = "";
                     string arg = "";
                     bool collectArg = false;
-                    if(line == "") {
+                    if(config[i] == "") {
                         continue;
                     }
 
-                    if (line.Contains('(')) {
-                        foreach (char elem in line) {
+                    if (config[i].Contains('(')) {
+                        foreach (char elem in config[i]) {
                             if (collectArg) {
                                 if (elem == ')') {
                                     break;
@@ -484,7 +506,7 @@ namespace Methane2._0{
                                 }
                                 parsedLine += elem;
                             }
-                            if (elem == '#') {
+                            if (elem == '#' || elem == '$') {
                                 Console.WriteLine("Comment Line Skipped");
                                 continue;
                             }
@@ -494,7 +516,7 @@ namespace Methane2._0{
                         }
                     }
                     else { 
-                        parsedLine = line;
+                        parsedLine = config[i];
                     }
 
                     Console.WriteLine(parsedLine);
@@ -504,7 +526,7 @@ namespace Methane2._0{
 
 
                     if (Commands.ContainsKey(parsedLine)) {
-                        fullLine = line;
+                        fullLine = config[i];
                         Commands[parsedLine]();
                     }
                     else {
@@ -516,6 +538,15 @@ namespace Methane2._0{
                     collectArg = false;
                     args.Clear();
                 }
+
+
+
+                Console.WriteLine("------------------------------------");
+                Console.WriteLine("All registered variables: ");
+                foreach (Tuple<string, string> elem in LanguageStack) {
+                    Console.WriteLine("Name: " + elem.Item1 + " Data: " + elem.Item2);
+                }
+                Console.WriteLine("------------------------------------");
             }
         }
     }

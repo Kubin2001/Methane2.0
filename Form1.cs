@@ -32,7 +32,7 @@ namespace Methane2._0{
                 loadInfo.Text += filePath;
                 configPath = filePath;
 
-                configDir = Path.GetDirectoryName(vsProjPath);
+                configDir = Path.GetDirectoryName(configPath);
             }
         }
 
