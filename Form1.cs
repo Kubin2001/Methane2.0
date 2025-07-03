@@ -21,6 +21,9 @@ namespace Methane2._0{
         public Form1(){
             AllocConsole();
             InitializeComponent();
+            startBtn.Enabled = false;
+            loadInfo.BackColor = Color.Red;
+            vsInfo.BackColor = Color.Red;
         }
 
         private void confInfo_Click(object sender, EventArgs e){
@@ -29,7 +32,7 @@ namespace Methane2._0{
             fd.Filter = "Config Methane file type (*.cfg)|*.cfg";
             if (fd.ShowDialog() == DialogResult.OK){
                 string filePath = fd.FileName;
-                loadInfo.Text += filePath;
+                loadInfo.BackColor = Color.Green;
                 configPath = filePath;
 
                 configDir = Path.GetDirectoryName(configPath);
@@ -43,10 +46,13 @@ namespace Methane2._0{
             fd.Filter = "Pliki projektu C# (*.vcxproj)|*.vcxproj";
             if (fd.ShowDialog() == DialogResult.OK){
                 string filePath = fd.FileName;
-                vsInfo.Text += filePath;
                 vsProjPath = filePath;
-
                 vsProjDir = Path.GetDirectoryName(vsProjPath);
+
+                vsInfo.BackColor = Color.Green;
+            }
+            if(configPath != null && vsProjPath != null) {
+                startBtn.Enabled=true;
             }
         }
 
@@ -55,6 +61,14 @@ namespace Methane2._0{
                 InterPreter inter = new InterPreter(configPath ,vsProjPath,configDir,vsProjDir);
                 inter.Run();
             }
+        }
+
+        private void btnRestart_Click(object sender, EventArgs e) {
+            configPath = null;
+            vsProjPath = null;
+            loadInfo.BackColor = Color.Red;
+            vsInfo.BackColor = Color.Red;
+            startBtn.Enabled = false;
         }
     }
 }

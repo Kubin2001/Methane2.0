@@ -34,11 +34,12 @@
             this.loadInfo = new System.Windows.Forms.Button();
             this.loadvsconfig = new System.Windows.Forms.Button();
             this.vsInfo = new System.Windows.Forms.Button();
+            this.btnRestart = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // confInfo
             // 
-            this.confInfo.Location = new System.Drawing.Point(12, 12);
+            this.confInfo.Location = new System.Drawing.Point(12, 60);
             this.confInfo.Name = "confInfo";
             this.confInfo.Size = new System.Drawing.Size(200, 40);
             this.confInfo.TabIndex = 0;
@@ -48,16 +49,17 @@
             // 
             // methaneInfo
             // 
-            this.methaneInfo.Location = new System.Drawing.Point(360, 12);
+            this.methaneInfo.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.methaneInfo.Location = new System.Drawing.Point(139, 14);
             this.methaneInfo.Name = "methaneInfo";
-            this.methaneInfo.Size = new System.Drawing.Size(200, 40);
+            this.methaneInfo.Size = new System.Drawing.Size(292, 40);
             this.methaneInfo.TabIndex = 2;
             this.methaneInfo.Text = "METHANE Refactored 2.0";
             this.methaneInfo.UseVisualStyleBackColor = true;
             // 
             // startBtn
             // 
-            this.startBtn.Location = new System.Drawing.Point(360, 71);
+            this.startBtn.Location = new System.Drawing.Point(186, 207);
             this.startBtn.Name = "startBtn";
             this.startBtn.Size = new System.Drawing.Size(200, 40);
             this.startBtn.TabIndex = 3;
@@ -67,16 +69,15 @@
             // 
             // loadInfo
             // 
-            this.loadInfo.Location = new System.Drawing.Point(12, 66);
+            this.loadInfo.Location = new System.Drawing.Point(12, 120);
             this.loadInfo.Name = "loadInfo";
             this.loadInfo.Size = new System.Drawing.Size(200, 51);
             this.loadInfo.TabIndex = 5;
-            this.loadInfo.Text = "Loaded Config:";
             this.loadInfo.UseVisualStyleBackColor = true;
             // 
             // loadvsconfig
             // 
-            this.loadvsconfig.Location = new System.Drawing.Point(12, 172);
+            this.loadvsconfig.Location = new System.Drawing.Point(360, 60);
             this.loadvsconfig.Name = "loadvsconfig";
             this.loadvsconfig.Size = new System.Drawing.Size(200, 40);
             this.loadvsconfig.TabIndex = 7;
@@ -86,12 +87,21 @@
             // 
             // vsInfo
             // 
-            this.vsInfo.Location = new System.Drawing.Point(12, 218);
+            this.vsInfo.Location = new System.Drawing.Point(360, 120);
             this.vsInfo.Name = "vsInfo";
             this.vsInfo.Size = new System.Drawing.Size(200, 51);
             this.vsInfo.TabIndex = 9;
-            this.vsInfo.Text = "Loaded VS Config:";
             this.vsInfo.UseVisualStyleBackColor = true;
+            // 
+            // btnRestart
+            // 
+            this.btnRestart.Location = new System.Drawing.Point(186, 253);
+            this.btnRestart.Name = "btnRestart";
+            this.btnRestart.Size = new System.Drawing.Size(200, 40);
+            this.btnRestart.TabIndex = 10;
+            this.btnRestart.Text = "Clear";
+            this.btnRestart.UseVisualStyleBackColor = true;
+            this.btnRestart.Click += new System.EventHandler(this.btnRestart_Click);
             // 
             // Form1
             // 
@@ -100,6 +110,7 @@
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
             this.ClientSize = new System.Drawing.Size(595, 321);
+            this.Controls.Add(this.btnRestart);
             this.Controls.Add(this.vsInfo);
             this.Controls.Add(this.loadvsconfig);
             this.Controls.Add(this.loadInfo);
@@ -120,6 +131,7 @@
         private System.Windows.Forms.Button loadInfo;
         private System.Windows.Forms.Button loadvsconfig;
         private System.Windows.Forms.Button vsInfo;
+        private System.Windows.Forms.Button btnRestart;
     }
 }
 

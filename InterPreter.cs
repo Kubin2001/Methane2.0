@@ -422,10 +422,18 @@ namespace Methane2._0{
                 List<string> config = new List<string>();
                 config.AddRange(loadConfig);
 
+                for (int i = 0; i < config.Count();) {
+                    if (config[i] == "" || config[i][0] == '#') {
+                        config.RemoveAt(i);          
+                    }
+                    else {
+                        i++;
+                    }
+                }
+
                 for (int i = 0; i < config.Count(); i++) {
                     // Registering Variables
                     if (config[i].Contains('$')) {
-
                         int gettingType = 0;
                         string varName = "";
                         string varData = "";
@@ -463,6 +471,8 @@ namespace Methane2._0{
                         }
                         Tuple<string, string> t = Tuple.Create(varName, varData);
                         LanguageStack.Add(t);
+                        config.RemoveAt(i);
+                        i--;
                         continue;
                     }
 
@@ -519,18 +529,9 @@ namespace Methane2._0{
                         parsedLine = config[i];
                     }
 
-                    Console.WriteLine(parsedLine);
-                    foreach (string elem in args) { 
-                        Console.WriteLine(elem);
-                    }
-
-
                     if (Commands.ContainsKey(parsedLine)) {
                         fullLine = config[i];
                         Commands[parsedLine]();
-                    }
-                    else {
-                        Console.WriteLine("Command Does not exist");
                     }
 
                     parsedLine = "";
@@ -539,14 +540,16 @@ namespace Methane2._0{
                     args.Clear();
                 }
 
-
-
-                Console.WriteLine("------------------------------------");
-                Console.WriteLine("All registered variables: ");
-                foreach (Tuple<string, string> elem in LanguageStack) {
-                    Console.WriteLine("Name: " + elem.Item1 + " Data: " + elem.Item2);
+                for (int i = 0; i < config.Count(); i++) {
+                    Console.WriteLine(config[i]); 
                 }
-                Console.WriteLine("------------------------------------");
+
+                //Console.WriteLine("------------------------------------");
+                //Console.WriteLine("All registered variables: ");
+                //foreach (Tuple<string, string> elem in LanguageStack) {
+                //    Console.WriteLine("Name: " + elem.Item1 + " Data: " + elem.Item2);
+                //}
+                //Console.WriteLine("------------------------------------");
             }
         }
     }
