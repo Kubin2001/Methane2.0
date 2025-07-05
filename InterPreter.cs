@@ -323,7 +323,14 @@ namespace Methane2._0{
             }
 
             string folderName = Path.GetFileName(Path.GetFullPath(dirPath));
-            string destinationRoot = Path.Combine(vsDir, folderName);
+            string destinationRoot = "";
+            if (args.Count > 1) {
+                destinationRoot = Path.Combine(vsDir, args[1], folderName);
+            }
+            else {
+                destinationRoot = Path.Combine(vsDir, folderName);
+            }
+                
 
             if (Directory.Exists(destinationRoot)) {
                 Console.WriteLine("CopyFolder: folder already exists in project path");
@@ -342,7 +349,7 @@ namespace Methane2._0{
                     string destFile = Path.Combine(destinationRoot, relativePath);
                     Directory.CreateDirectory(Path.GetDirectoryName(destFile));
                     File.Copy(file, destFile, overwrite: true);
-                    Console.WriteLine("Copied: " + destFile);
+                    //Console.WriteLine("Copied: " + destFile);
                 }
 
                 Console.WriteLine("CopyFolder: completed successfully");
@@ -368,7 +375,7 @@ namespace Methane2._0{
                 return;
             }
 
-            int[] allowed = { 3, 11, 14, 17, 20, 98 };
+            int[] allowed = { 3, 11, 14, 17, 20, 23, 98 };
             if (!allowed.Contains(result)) {
                 Console.WriteLine("SetCppStandard  unsupported C++ standard.");
                 return;
