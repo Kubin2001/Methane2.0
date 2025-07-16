@@ -78,7 +78,9 @@ namespace Methane2._0{
             Commands["CopyMultipleFiles"] = CopyMultipleFiles;
             Commands["SetCppStandard"] = SetCppStandard;
             Commands["CopyFolder"] = CopyFolder;
+            Commands["CreateFolder"] = CreateFolder;
             Commands["JoinVariables"] = JoinVariables;
+
 
         }
 
@@ -263,13 +265,19 @@ namespace Methane2._0{
 
         private void CopySingleFile() {
             if (args.Count < 1) {
-                Console.WriteLine("CopySingleFile expected 1 args got:" + args.Count);
+                Console.WriteLine("CopySingleFile expected at least 1 arg got:" + args.Count);
                 return;
             }
 
+            string destPath = "";
+            if (args.Count == 2) {
+                destPath = Path.Combine(args[1] ,Path.GetFileName(args[0]));
+            }
+            else {
+                destPath = Path.Combine(vsDir, Path.GetFileName(args[0]));
+            }
 
             try {
-                string destPath = Path.Combine(vsDir, Path.GetFileName(args[0]));
                 File.Copy(args[0], destPath, overwrite: true);
                 Console.WriteLine("File copied to :" + vsDir);
             }
@@ -289,10 +297,16 @@ namespace Methane2._0{
                 Console.WriteLine("CopyMultipleFiles expected 1 args got:" + args.Count);
                 return;
             }
+            string destPath = "";
             try {
                 string[] files = Directory.GetFiles(args[0]);
                 foreach (string file in files) {
-                    string destPath = Path.Combine(vsDir, Path.GetFileName(file));
+                    if (args.Count == 2) {
+                        destPath = Path.Combine(args[1], Path.GetFileName(file));
+                    }
+                    else {
+                        destPath = Path.Combine(vsDir, Path.GetFileName(file));
+                    }
                     File.Copy(file, destPath, overwrite: true);
                     Console.WriteLine("File copied to :" + vsDir);
                 }
@@ -362,6 +376,22 @@ namespace Methane2._0{
             }
             catch (Exception ex) {
                 Console.WriteLine($"Unexpected error CopyFolder: {ex.Message}");
+            }
+        }
+
+        private void CreateFolder() {
+            if (args.Count != 2) {
+                Console.WriteLine("CreateFolder expected exacly 2 arg got:" + args.Count);
+                return;
+            }
+
+            string destPath = args[0] + "\\" +args[1];
+
+            try {
+                Directory.CreateDirectory(destPath);
+            }
+            catch (Exception ex) {
+                Console.WriteLine($"Unexpected error CreateFolder: {ex.Message}");
             }
         }
 
