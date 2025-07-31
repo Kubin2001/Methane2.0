@@ -4,5 +4,5 @@ Simple win forms app for easy library linking to Visual Studio C++ created only 
 
 It includes its own interpretet config language
 
-#Reguires
+#Requires
 	- .Net framework 4.8
