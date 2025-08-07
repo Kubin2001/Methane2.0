@@ -1,0 +1,2 @@
+Just click Language in notepad++ main tab 
+then click User Defined Language/Import and import MethaneConfig file
