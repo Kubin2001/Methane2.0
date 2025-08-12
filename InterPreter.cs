@@ -449,145 +449,143 @@ namespace Methane2._0{
         }
 
         public void Run(){
-            if (ready) {
-                Tuple<string, string> t1 = Tuple.Create("vsDir", vsDir);
-                Tuple<string, string> t2 = Tuple.Create("cfgDir", configDir);
-                LanguageStack.Add(t1);
-                LanguageStack.Add(t2);
+            if (!ready) {
+                Console.WriteLine("Interpreter not ready aborting"); 
+                return; 
+            }
+            Console.WriteLine("Script started");
+            Tuple<string, string> t1 = Tuple.Create("vsDir", vsDir);
+            Tuple<string, string> t2 = Tuple.Create("cfgDir", configDir);
+            LanguageStack.Add(t1);
+            LanguageStack.Add(t2);
 
-                String[] loadConfig = File.ReadAllLines(this.configPath);
-                List<string> config = new List<string>();
-                config.AddRange(loadConfig);
+            String[] loadConfig = File.ReadAllLines(this.configPath);
+            List<string> config = new List<string>();
+            config.AddRange(loadConfig);
 
-                for (int i = 0; i < config.Count();) {
-                    if (config[i] == "" || config[i][0] == '#') {
-                        config.RemoveAt(i);          
+            for (int i = 0; i < config.Count();) {
+                if (config[i] == "" || config[i][0] == '#') {
+                    config.RemoveAt(i);          
+                }
+                else {
+                    i++;
+                }
+            }
+
+            for (int i = 0; i < config.Count(); i++) {
+                // Registering Variables
+                if (config[i].Contains('$')) {
+                    int gettingType = 0;
+                    string varName = "";
+                    string varData = "";
+                    foreach (char elem in config[i]) {
+                        if (elem == ' ') { continue; }
+
+                        switch (gettingType) {
+                            case 0:
+                                if (elem == '{') {
+                                    gettingType = 1;
+                                    break;
+                                }
+                                break;
+                            case 1:
+                                if (elem == '}') {
+                                    gettingType = 2;
+                                    break;
+                                }
+                                varName += elem;
+                                break;
+                            case 2:
+                                if (elem == '=') {
+                                    gettingType = 3;
+                                    break;
+                                }
+                                varName += elem;
+                                break;
+                            case 3:
+                                if (elem == ' ') {
+                                    break;
+                                }
+                                varData += elem;
+                                break;
+                        }
                     }
-                    else {
-                        i++;
-                    }
+                    Tuple<string, string> t = Tuple.Create(varName, varData);
+                    LanguageStack.Add(t);
+                    config.RemoveAt(i);
+                    i--;
+                    continue;
                 }
 
-                for (int i = 0; i < config.Count(); i++) {
-                    // Registering Variables
-                    if (config[i].Contains('$')) {
-                        int gettingType = 0;
-                        string varName = "";
-                        string varData = "";
-                        foreach (char elem in config[i]) {
-                            if (elem == ' ') { continue; }
+                // Inserting Variables
+                string newLine = config[i];
+                while (newLine.Contains('{') && newLine.Contains('}') && !newLine.Contains('$')) {
+                    newLine = InsertVariable(newLine);
+                }
+                config[i] = newLine;
 
-                            switch (gettingType) {
-                                case 0:
-                                    if (elem == '{') {
-                                        gettingType = 1;
-                                        break;
-                                    }
-                                    break;
-                                case 1:
-                                    if (elem == '}') {
-                                        gettingType = 2;
-                                        break;
-                                    }
-                                    varName += elem;
-                                    break;
-                                case 2:
-                                    if (elem == '=') {
-                                        gettingType = 3;
-                                        break;
-                                    }
-                                    varName += elem;
-                                    break;
-                                case 3:
-                                    if (elem == ' ') {
-                                        break;
-                                    }
-                                    varData += elem;
-                                    break;
+
+                // Interpreting Line
+                string parsedLine = "";
+                string arg = "";
+                bool collectArg = false;
+                if(config[i] == "") {
+                    continue;
+                }
+
+                if (config[i].Contains('(')) {
+                    foreach (char elem in config[i]) {
+                        if (collectArg) {
+                            if (elem == ')') {
+                                break;
                             }
-                        }
-                        Tuple<string, string> t = Tuple.Create(varName, varData);
-                        LanguageStack.Add(t);
-                        config.RemoveAt(i);
-                        i--;
-                        continue;
-                    }
-
-                    // Inserting Variables
-                    string newLine = config[i];
-                    while (newLine.Contains('{') && newLine.Contains('}') && !newLine.Contains('$')) {
-                        newLine = InsertVariable(newLine);
-                    }
-                    config[i] = newLine;
-
-
-                    // Interpreting Line
-                    string parsedLine = "";
-                    string arg = "";
-                    bool collectArg = false;
-                    if(config[i] == "") {
-                        continue;
-                    }
-
-                    if (config[i].Contains('(')) {
-                        foreach (char elem in config[i]) {
-                            if (collectArg) {
-                                if (elem == ')') {
-                                    break;
-                                }
-                                if (elem == ',') {
-                                    args.Add(arg);
-                                    arg = "";
-                                    continue;
-                                }
-                                if (elem == ' ') {
-                                    continue;
-                                }
-                                arg += elem;
-
-                            }
-                            else {
-                                if (elem == '(') {
-                                    collectArg = true;
-                                    continue;
-                                }
-                                parsedLine += elem;
-                            }
-                            if (elem == '#' || elem == '$') {
-                                Console.WriteLine("Comment Line Skipped");
+                            if (elem == ',') {
+                                args.Add(arg);
+                                arg = "";
                                 continue;
                             }
-                        }
-                        if(arg != "") {
-                            args.Add(arg);
-                        }
-                    }
-                    else { 
-                        parsedLine = config[i];
-                    }
+                            if (elem == ' ') {
+                                continue;
+                            }
+                            arg += elem;
 
-                    if (Commands.ContainsKey(parsedLine)) {
-                        fullLine = config[i];
-                        Commands[parsedLine]();
+                        }
+                        else {
+                            if (elem == '(') {
+                                collectArg = true;
+                                continue;
+                            }
+                            parsedLine += elem;
+                        }
+                        if (elem == '#' || elem == '$') {
+                            Console.WriteLine("Comment Line Skipped");
+                            continue;
+                        }
                     }
-
-                    parsedLine = "";
-                    arg = "";
-                    collectArg = false;
-                    args.Clear();
+                    if(arg != "") {
+                        args.Add(arg);
+                    }
+                }
+                else { 
+                    parsedLine = config[i];
                 }
 
-                for (int i = 0; i < config.Count(); i++) {
-                    Console.WriteLine(config[i]); 
+                if (Commands.ContainsKey(parsedLine)) {
+                    fullLine = config[i];
+                    Commands[parsedLine]();
                 }
 
-                //Console.WriteLine("------------------------------------");
-                //Console.WriteLine("All registered variables: ");
-                //foreach (Tuple<string, string> elem in LanguageStack) {
-                //    Console.WriteLine("Name: " + elem.Item1 + " Data: " + elem.Item2);
-                //}
-                //Console.WriteLine("------------------------------------");
+                parsedLine = "";
+                arg = "";
+                collectArg = false;
+                args.Clear();
             }
+
+            Console.WriteLine("Script finisched");
+
+            //for (int i = 0; i < config.Count(); i++) {
+            //    Console.WriteLine(config[i]); 
+            //}
         }
     }
 }
